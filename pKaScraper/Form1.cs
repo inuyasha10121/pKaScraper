@@ -57,8 +57,8 @@ namespace pKaScraper
                 {
                     File.AppendAllText(logfile, "Error: Hydrogen SMD output not found!\n");
                 }
-                var GgH = 1.0m;
-                var GaqH = 1.0m;
+                var GgH = 1000000.0m;
+                var GaqH = 1000000.0m;
                 var filelines = File.ReadAllLines(sampledirs[hdirindex] + "\\gp\\H.out");
                 foreach (var line in filelines)
                 {
@@ -66,10 +66,14 @@ namespace pKaScraper
                     {
                         GgH = decimal.Parse(line.Split((char[])null, StringSplitOptions.RemoveEmptyEntries)[7]);
                     }
-                    if (line.Contains("imaginary frequenc"))
+                    if (line.Contains("imaginary frequencies (negative"))
                     {
                         File.AppendAllText(logfile, "Error: Hydrogen gas-phase has imaginary frequency somehow\n");
                     }
+                }
+                if(GgH == 1000000.0m)
+                {
+                    File.AppendAllText(logfile, "Error: Hydrogen gas-phase energy not found!\n");
                 }
 
                 filelines = File.ReadAllLines(sampledirs[hdirindex] + "\\smd\\H.out");
@@ -79,12 +83,18 @@ namespace pKaScraper
                     {
                         GaqH = decimal.Parse(line.Split((char[])null, StringSplitOptions.RemoveEmptyEntries)[7]);
                     }
-                    if (line.Contains("imaginary frequenc"))
+                    if (line.Contains("imaginary frequencies (negative"))
                     {
                         File.AppendAllText(logfile, "Error: Hydrogen SMD has imaginary frequency somehow\n");
                         return;
                     }
                 }
+                if (GaqH == 1000000.0m)
+                {
+                    File.AppendAllText(logfile, "Error: Hydrogen SMD energy not found!\n");
+                }
+
+
                 Console.WriteLine("GgH: " + GgH + "\tGaqH: " + GaqH);
                 Console.WriteLine("Getting Data...");
                 var data = new List<List<List<decimal>>>();
@@ -125,12 +135,17 @@ namespace pKaScraper
                                 {
                                     data[data.Count - 1][j][0] = decimal.Parse(line.Split((char[])null, StringSplitOptions.RemoveEmptyEntries)[7]);
                                 }
-                                if (line.Contains("imaginary frequenc"))
+                                if (line.Contains("imaginary frequencies (negative"))
                                 {
                                     File.AppendAllText(logfile, "Error: Imaginary frequency: " + gpouts[j] + "\n");
                                 }
 
                             }
+                            if (data[data.Count - 1][j][0] == 1000000.0m)
+                            {
+                                File.AppendAllText(logfile, "Error: Gas-phase energy not found: " + gpouts[j] + "\n");
+                            }
+
                             outcontents = File.ReadAllLines(sampledirs[i] + "\\smd\\" + currout);
                             foreach (var line in outcontents)
                             {
@@ -138,11 +153,16 @@ namespace pKaScraper
                                 {
                                     data[data.Count - 1][j][1] = decimal.Parse(line.Split((char[])null, StringSplitOptions.RemoveEmptyEntries)[7]);
                                 }
-                                if (line.Contains("imaginary frequenc"))
+                                if (line.Contains("imaginary frequencies (negative"))
                                 {
                                     File.AppendAllText(logfile, "Error: Imaginary frequency: " + gpouts[j] + "\n");
                                 }
                             }
+                            if (data[data.Count - 1][j][1] == 1000000.0m)
+                            {
+                                File.AppendAllText(logfile, "Error: SMD energy not found: " + gpouts[j] + "\n");
+                            }
+
                         }
                     }
                 }
