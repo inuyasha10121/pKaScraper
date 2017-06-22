@@ -107,9 +107,13 @@ namespace pKaScraper
                         samples.Add(sampledirs[i].Substring(sampledirs[i].LastIndexOf("\\") + 1));
                         var gpouts = Directory.GetFiles(sampledirs[i] + "\\gp\\", "*.out");
                         var smdouts = Directory.GetFiles(sampledirs[i] + "\\smd\\", "*.out");
-                        var outcount = Math.Max(gpouts.Length, smdouts.Length);
+                        if(gpouts.Length != smdouts.Length)
+                        {
+                            Console.WriteLine("ERROR:");
+                            return;
+                        }
 
-                        for (int j = 0; j < outcount; ++j)
+                        for (int j = 0; j < gpouts.Length; ++j)
                         {
                             data[data.Count - 1].Add(new List<decimal>());
                             var currout = "";
@@ -137,13 +141,13 @@ namespace pKaScraper
                                 }
                                 if (line.Contains("imaginary frequencies (negative"))
                                 {
-                                    File.AppendAllText(logfile, "Error: Imaginary frequency: " + gpouts[j] + "\n");
+                                    File.AppendAllText(logfile, "Error: Gas-phase imaginary frequency: " + samples[samples.Count-1] + "_" + currout + "\n");
                                 }
 
                             }
                             if (data[data.Count - 1][j][0] == 1000000.0m)
                             {
-                                File.AppendAllText(logfile, "Error: Gas-phase energy not found: " + gpouts[j] + "\n");
+                                File.AppendAllText(logfile, "Error: Gas-phase energy not found: " + samples[samples.Count - 1] + "_" + currout + "\n");
                             }
 
                             outcontents = File.ReadAllLines(sampledirs[i] + "\\smd\\" + currout);
@@ -155,19 +159,19 @@ namespace pKaScraper
                                 }
                                 if (line.Contains("imaginary frequencies (negative"))
                                 {
-                                    File.AppendAllText(logfile, "Error: Imaginary frequency: " + gpouts[j] + "\n");
+                                    File.AppendAllText(logfile, "Error: SMD imaginary frequency: " + samples[samples.Count - 1] + "_" + currout + "\n");
                                 }
                             }
                             if (data[data.Count - 1][j][1] == 1000000.0m)
                             {
-                                File.AppendAllText(logfile, "Error: SMD energy not found: " + gpouts[j] + "\n");
+                                File.AppendAllText(logfile, "Error: SMD energy not found: " + samples[samples.Count - 1] + "_" + currout + "\n");
                             }
 
                         }
                     }
                 }
 
-                Console.WriteLine("Processing Data");
+                Console.WriteLine("Writing Data");
                 string output = "Compound:,State:,Gg:,Gaq:,\n";
                 output += "H,H," + GgH + "," + GaqH + ",\n";
                 for (int i = 0; i < data.Count; ++i)
@@ -175,11 +179,22 @@ namespace pKaScraper
                     for (int j = 0; j < data[i].Count; ++j)
                     {
                         if (j == 0)
-                            output += samples[i] + ",A," + data[i][j][0] + "," + data[i][j][1] + ",\n";
+                            output += samples[i] + ",A,";
                         else if (j == 1)
-                            output += ",HA," + data[i][j][0] + "," + data[i][j][1] + ",\n";
+                            output += ",HA,";
                         else
-                            output += ",H" + j + "A," + data[i][j][0] + "," + data[i][j][1] + ",\n";
+                            output += ",H" + j + "A,";
+
+                        if(data[i][j][0] != 1000000.0m)
+                        {
+                            output += data[i][j][0];
+                        }
+                        output += ",";
+                        if (data[i][j][1] != 1000000.0m)
+                        {
+                            output += data[i][j][1];
+                        }
+                        output += ",\n";
                     }
                 }
                 File.WriteAllText(savefile, output);
