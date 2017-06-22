@@ -19,6 +19,33 @@ namespace pKaScraper
             InitializeComponent();
         }
 
+        Dictionary<string, decimal> experimentalValues = new Dictionary<string, decimal>
+        {
+            {"Acetic", 4.75m},
+            {"Chloracetic", 2.85m},
+            {"Cyanoacetic", 2.45m},
+            {"Formic", 3.75m},
+            {"H3PO4_1", 2.15m},
+            {"H3PO4_2", 7.20m},
+            {"H3PO4_3", 12.35m},
+            {"Morpholine", 8.36m},
+            {"Oxalic_1", 1.23m},
+            {"Oxalic_2", 4.19m},
+            {"Pivalic", 5.03m},
+            {"m-Chlorobenzoic", 3.83m},
+            {"Methylhydroperoxide", 11.5m},
+            {"m-Nitrobenzoic", 2.45m},
+            {"N-Methylmorpholine", 7.38m},
+            {"o-Chlorobenzoic", 2.94m},
+            {"o-Nitrobenzoic", 2.17m},
+            {"p-Chlorobenzoic", 3.99m},
+            {"Peracetic", 8.2m},
+            {"p-Nitrobenzoic", 3.44m},
+            {"Quinuclidine", 11.0m},
+            {"TBA", 17.0m},
+            {"Trifluoroethanol", 12.5m}
+        };
+
         private void buttonRun_Click(object sender, EventArgs e)
         {
             if (textBoxPath.Text == String.Empty)
