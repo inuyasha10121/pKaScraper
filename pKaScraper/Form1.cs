@@ -96,6 +96,7 @@ namespace pKaScraper
                     if (line.Contains("imaginary frequencies (negative"))
                     {
                         File.AppendAllText(logfile, "Error: Hydrogen gas-phase has imaginary frequency somehow\n");
+                        break;
                     }
                 }
                 if(GgH == 1000000.0m)
@@ -113,7 +114,7 @@ namespace pKaScraper
                     if (line.Contains("imaginary frequencies (negative"))
                     {
                         File.AppendAllText(logfile, "Error: Hydrogen SMD has imaginary frequency somehow\n");
-                        return;
+                        break;
                     }
                 }
                 if (GaqH == 1000000.0m)
@@ -169,6 +170,7 @@ namespace pKaScraper
                                 if (line.Contains("imaginary frequencies (negative"))
                                 {
                                     File.AppendAllText(logfile, "Error: Gas-phase imaginary frequency: " + samples[samples.Count-1] + "_" + currout + "\n");
+                                    break;
                                 }
 
                             }
@@ -187,6 +189,7 @@ namespace pKaScraper
                                 if (line.Contains("imaginary frequencies (negative"))
                                 {
                                     File.AppendAllText(logfile, "Error: SMD imaginary frequency: " + samples[samples.Count - 1] + "_" + currout + "\n");
+                                    break;
                                 }
                             }
                             if (data[data.Count - 1][j][1] == 1000000.0m)
@@ -198,7 +201,72 @@ namespace pKaScraper
                     }
                 }
 
-                Console.WriteLine("Writing Data");
+                Console.WriteLine("Calculating pKa values when able...");
+                var thermovals = new List<List<List<decimal>>>();
+                for(int i = 0; i < data.Count; ++i)
+                {
+                    thermovals.Add(new List<List<decimal>>());
+                    for (int j = 1; j < data[i].Count; ++j)
+                    {
+                        //dGsHA, dGsA, dGsH, dGg, dGaq, pKag, pKaaq, %Eg, %Eaq
+                        thermovals[i].Add(new List<decimal>(new decimal[] { 1000000.0m, 1000000.0m, 1000000.0m, 1000000.0m, 1000000.0m, 1000000.0m, 1000000.0m, 1000000.0m, 1000000.0m }));
+
+                        //Get relevant data values
+                        var GgHA = data[i][j][0];
+                        var GgA = data[i][j - 1][0];
+                        var GaqHA = data[i][j][1];
+                        var GaqA = data[i][j - 1][1];
+
+                        //Calculate dGsHA
+                        if (GgHA != 1000000.0m && GaqHA != 1000000.0m)
+                        {
+                            thermovals[i][j - 1][0] = GaqHA - GgHA;
+                        }
+                        //Calculate dGsA
+                        if (GgA != 1000000.0m && GaqA != 1000000.0m)
+                        {
+                            thermovals[i][j - 1][1] = GaqA - GgA;
+                        }
+                        //Calculate dGsH
+                        if (GgH != 1000000.0m && GaqH != 1000000.0m)
+                        {
+                            thermovals[i][j - 1][2] = GaqH - GgH;
+                        }
+                        //Calculate dGg
+                        if (GgHA != 1000000.0m && GgA != 1000000.0m && GgH != 1000000.0m)
+                        {
+                            thermovals[i][j - 1][3] = (GgA + GgH) - GgHA;
+                        }
+                        //Calculate dGaq
+                        if (GaqHA != 1000000.0m && GaqA != 1000000.0m && GaqH != 1000000.0m)
+                        {
+                            thermovals[i][j - 1][4] = (GaqA + GaqH) - GaqHA;
+                        }
+                        //Calculate pKag
+                        if(thermovals[i][j - 1][0] != 1000000.0m && thermovals[i][j - 1][1] != 1000000.0m && thermovals[i][j - 1][2] != 1000000.0m && thermovals[i][j - 1][3] != 1000000.0m)
+                        {
+                            thermovals[i][j - 1][5] = (thermovals[i][j - 1][3] + (1.9872036E-3m * 298.15m * (decimal)Math.Log(24.46))) / (2.303m * 1.9872036E-3m * 298.15m);
+                        }
+                        //Calculate pKaaq
+                        if (thermovals[i][j-1][4] != 1000000.0m)
+                        {
+                            thermovals[i][j - 1][6] = thermovals[i][j - 1][4] / (2.303m * 1.9872036E-3m * 298.15m);
+                        }
+                        var expkey = samples[i];
+                        if(data[i].Count != 2)
+                        {
+                            expkey += "_" + j;
+                        }
+                        var expval = experimentalValues[expkey];
+                        //Calculate %Eg
+                        if(thermovals[i][j-1][5] != 1000000.0m)
+                        {
+                            
+                        }
+                    }
+                }
+
+                Console.WriteLine("Writing data to file...");
                 string output = "Compound:,State:,Gg:,Gaq:,\n";
                 output += "H,H," + GgH + "," + GaqH + ",\n";
                 for (int i = 0; i < data.Count; ++i)
